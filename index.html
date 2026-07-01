@@ -37,6 +37,7 @@ button{cursor:pointer}
 .products{flex:1;overflow-y:auto;padding:8px 12px}
 .product-card{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .product-name{font-size:14px;font-weight:600;color:#1a1a1a;margin-bottom:6px}
+.edit-btn{background:none;border:none;font-size:16px;cursor:pointer;color:#aaa;padding:2px 6px}
 .variants{display:flex;gap:8px;flex-wrap:wrap}
 .var-btn{display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:8px;border:1.5px solid #e0e0e0;background:#fafafa;font-size:13px;transition:background .1s}
 .var-btn:active{background:#e8f5e9}
@@ -356,7 +357,17 @@ const LS={
 };
 
 function App(){
-  const[products,setProducts]=useState(()=>{const c=LS.get("kasir-custom");return c?[...PRODUCTS,...c]:PRODUCTS});
+  const[products,setProducts]=useState(()=>{
+    let all=[...PRODUCTS];
+    const c=LS.get("kasir-custom");if(c)all=[...all,...c];
+    const mods=LS.get("kasir-mods");
+    if(mods){
+      const{prices={},deleted=[],names={}}=mods;
+      all=all.filter(p=>!deleted.includes(p.id));
+      all=all.map(p=>({...p,name:names[p.id]||p.name,v:prices[p.id]||p.v}));
+    }
+    return all;
+  });
   const[search,setSearch]=useState("");
   const[cat,setCat]=useState("Semua");
   const[cart,setCart]=useState(()=>LS.get("kasir-cart")||[]);
@@ -367,7 +378,20 @@ function App(){
   const[np,setNp]=useState({name:"",cat:"Mie Instan",price:"",label:"Pcs"});
   const[toast,setToast]=useState("");
   const[bayar,setBayar]=useState("");
+  const[editItem,setEditItem]=useState(null);
   const sRef=useRef(null);
+
+  const saveMods=(up)=>{
+    const prices={},names={},deleted=[];
+    PRODUCTS.forEach(bp=>{
+      const u=up.find(p=>p.id===bp.id);
+      if(!u){deleted.push(bp.id);return}
+      if(u.name!==bp.name)names[bp.id]=u.name;
+      if(JSON.stringify(u.v)!==JSON.stringify(bp.v))prices[bp.id]=u.v;
+    });
+    LS.set("kasir-mods",{prices,deleted,names});
+    LS.set("kasir-custom",up.filter(x=>x.id.startsWith("c-")));
+  };
 
   useEffect(()=>{cart.length?LS.set("kasir-cart",cart):LS.del("kasir-cart")},[cart]);
 
@@ -409,9 +433,31 @@ function App(){
     if(!np.name||!np.price)return;
     const p={id:"c-"+Date.now(),name:np.name,cat:np.cat,v:[{l:np.label,p:parseInt(np.price)}]};
     const up=[...products,p];setProducts(up);
-    LS.set("kasir-custom",up.filter(x=>x.id.startsWith("c-")));
+    saveMods(up);
     setNp({name:"",cat:"Mie Instan",price:"",label:"Pcs"});setShowAdd(false);
     showToast("Produk ditambahkan!");
+  };
+
+  const openEdit=(prod)=>{
+    setEditItem({...prod,editName:prod.name,editCat:prod.cat,editV:prod.v.map(vr=>({...vr,ep:String(vr.p)}))});
+  };
+  const saveEdit=()=>{
+    if(!editItem)return;
+    const up=products.map(p=>p.id!==editItem.id?p:{...p,name:editItem.editName||p.name,cat:editItem.editCat||p.cat,v:editItem.editV.map(vr=>({l:vr.l,p:parseInt(vr.ep)||vr.p}))});
+    setProducts(up);saveMods(up);setEditItem(null);showToast("Produk diperbarui!");
+  };
+  const deleteProd=()=>{
+    if(!editItem||!confirm('Hapus produk "'+editItem.name+'"?'))return;
+    const up=products.filter(p=>p.id!==editItem.id);
+    setProducts(up);saveMods(up);setEditItem(null);showToast("Produk dihapus!");
+  };
+  const addEditVar=()=>{
+    if(!editItem)return;
+    setEditItem({...editItem,editV:[...editItem.editV,{l:"Pcs",p:0,ep:""}]});
+  };
+  const rmEditVar=(idx)=>{
+    if(!editItem||editItem.editV.length<=1)return;
+    setEditItem({...editItem,editV:editItem.editV.filter((_,i)=>i!==idx)});
   };
 
   return e("div",{style:{maxWidth:480,margin:"0 auto",minHeight:"100vh",display:"flex",flexDirection:"column",position:"relative"}},
@@ -446,7 +492,10 @@ function App(){
     e("div",{className:"products hide-scroll",style:{paddingBottom:cart.length?80:16}},
       filtered.length===0&&e("div",{className:"empty"},e("div",{className:"empty-icon"},"\u{1F4E6}"),"Tidak ada produk ditemukan"),
       filtered.map(p=>e("div",{key:p.id,className:"product-card"},
-        e("div",{className:"product-name"},p.name),
+        e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}},
+          e("div",{className:"product-name",style:{marginBottom:0}},p.name),
+          e("button",{onClick:()=>openEdit(p),style:{background:"none",border:"none",fontSize:16,cursor:"pointer",color:"#aaa",padding:"2px 6px"}},"\u270F\uFE0F")
+        ),
         e("div",{className:"variants"},
           p.v.map(vr=>e("button",{key:vr.l,className:"var-btn",onClick:()=>addToCart(p,vr)},
             e("span",{className:"var-label"},vr.l),
@@ -561,6 +610,48 @@ function App(){
               it.qty+"x "+it.name+" ("+it.label+") \u2014 "+fmt(it.price*it.qty)
             ))
           ))
+        )
+      )
+    ),
+
+    // Edit modal
+    editItem&&e("div",{className:"overlay overlay-center",onClick:ev=>{if(ev.target===ev.currentTarget)setEditItem(null)}},
+      e("div",{className:"modal-box",style:{maxHeight:"80vh",overflowY:"auto"}},
+        e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}},
+          e("div",{className:"modal-title",style:{marginBottom:0}},"Edit Produk"),
+          e("button",{className:"panel-close",onClick:()=>setEditItem(null)},"\u2715")
+        ),
+        e("div",{className:"modal-fields"},
+          e("div",null,
+            e("div",{style:{fontSize:12,color:"#888",marginBottom:4}},"Nama Produk"),
+            e("input",{className:"modal-input",value:editItem.editName,onChange:ev=>setEditItem({...editItem,editName:ev.target.value})})
+          ),
+          e("div",null,
+            e("div",{style:{fontSize:12,color:"#888",marginBottom:4}},"Kategori"),
+            e("select",{className:"modal-input",value:editItem.editCat,onChange:ev=>setEditItem({...editItem,editCat:ev.target.value})},
+              CATS.filter(c=>c!=="Semua").map(c=>e("option",{key:c,value:c},c))
+            )
+          ),
+          e("div",null,
+            e("div",{style:{fontSize:12,color:"#888",marginBottom:8}},"Harga"),
+            editItem.editV.map((vr,idx)=>e("div",{key:idx,style:{display:"flex",gap:8,marginBottom:8,alignItems:"center"}},
+              e("select",{style:{flex:1,padding:8,borderRadius:8,border:"1.5px solid #ddd",fontSize:13},value:vr.l,onChange:ev=>{
+                const nv=[...editItem.editV];nv[idx]={...nv[idx],l:ev.target.value};setEditItem({...editItem,editV:nv});
+              }},["Pcs","Ecer","Karton","Renteng","Box","Galon","Pack"].map(l=>e("option",{key:l,value:l},l))),
+              e("div",{style:{flex:2,position:"relative"}},
+                e("span",{style:{position:"absolute",left:8,top:"50%",transform:"translateY(-50%)",fontSize:12,color:"#888"}},"Rp"),
+                e("input",{type:"number",style:{width:"100%",padding:"8px 8px 8px 28px",borderRadius:8,border:"1.5px solid #ddd",fontSize:14,fontWeight:600,boxSizing:"border-box"},value:vr.ep,onChange:ev=>{
+                  const nv=[...editItem.editV];nv[idx]={...nv[idx],ep:ev.target.value};setEditItem({...editItem,editV:nv});
+                }})
+              ),
+              editItem.editV.length>1&&e("button",{onClick:()=>rmEditVar(idx),style:{background:"#ffeaea",border:"none",borderRadius:8,width:32,height:32,fontSize:16,cursor:"pointer",color:"#e53935",flexShrink:0}},"\u2715")
+            )),
+            e("button",{onClick:addEditVar,style:{width:"100%",padding:8,borderRadius:8,border:"1.5px dashed #ccc",background:"#fafafa",fontSize:13,color:"#666",cursor:"pointer"}},"+ Tambah Varian Harga")
+          ),
+          e("div",{style:{display:"flex",gap:10,marginTop:8}},
+            e("button",{onClick:deleteProd,style:{flex:1,padding:12,borderRadius:10,border:"1.5px solid #e53935",background:"#fff",fontSize:14,cursor:"pointer",color:"#e53935",fontWeight:600}},"Hapus"),
+            e("button",{onClick:saveEdit,style:{flex:2,padding:12,borderRadius:10,border:"none",background:"#1a6b4a",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}},"Simpan")
+          )
         )
       )
     )
