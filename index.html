@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a6b4a">
+<title>Kasir Toko</title>
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiS2FzaXIgVG9rbyIsInNob3J0X25hbWUiOiJLYXNpciIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjMWE2YjRhIiwidGhlbWVfY29sb3IiOiIjMWE2YjRhIn0=">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f0f2f5;overflow-x:hidden}
+input,select,button{font-family:inherit;outline:none}
+button{cursor:pointer}
+::-webkit-scrollbar{display:none}
+.hide-scroll{-ms-overflow-style:none;scrollbar-width:none}
+
+.header{background:linear-gradient(135deg,#1a6b4a 0%,#0d4a32 100%);color:#fff;padding:16px 16px 12px;position:sticky;top:0;z-index:20}
+.header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.header-title{font-size:20px;font-weight:700;letter-spacing:-0.5px}
+.header-sub{font-size:11px;opacity:.7}
+.header-btns{display:flex;gap:8px}
+.btn-hist{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;padding:6px 12px;font-size:13px}
+.btn-add{background:#f0c040;border:none;color:#1a1a1a;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:600}
+
+.search-wrap{position:relative}
+.search-input{width:100%;padding:10px 12px 10px 36px;border-radius:10px;border:none;font-size:15px;background:rgba(255,255,255,.95);color:#1a1a1a}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:18px;opacity:.4}
+.search-clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:18px;color:#888}
+
+.cats{display:flex;gap:6px;overflow-x:auto;padding:10px 12px 6px;background:#fff;border-bottom:1px solid #e8e8e8;position:sticky;top:0;z-index:15;-webkit-overflow-scrolling:touch}
+.cat-btn{flex-shrink:0;padding:6px 14px;border-radius:20px;border:none;font-size:13px;transition:all .15s}
+.cat-btn.active{background:#1a6b4a;color:#fff;font-weight:600}
+.cat-btn.inactive{background:#f0f0f0;color:#555;font-weight:400}
+
+.products{flex:1;overflow-y:auto;padding:8px 12px}
+.product-card{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.product-name{font-size:14px;font-weight:600;color:#1a1a1a;margin-bottom:6px}
+.variants{display:flex;gap:8px;flex-wrap:wrap}
+.var-btn{display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:8px;border:1.5px solid #e0e0e0;background:#fafafa;font-size:13px;transition:background .1s}
+.var-btn:active{background:#e8f5e9}
+.var-label{color:#777;font-size:12px}
+.var-price{font-weight:700;color:#1a6b4a}
+.var-plus{background:#1a6b4a;color:#fff;border-radius:6px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700}
+
+.cart-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#1a6b4a;color:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 -4px 20px rgba(0,0,0,.15);z-index:30}
+.cart-badge{background:#f0c040;color:#1a1a1a;border-radius:12px;padding:2px 10px;font-weight:700;font-size:14px;margin-right:10px}
+.cart-total{font-size:18px;font-weight:700}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:40;display:flex;flex-direction:column;justify-content:flex-end}
+.overlay-center{align-items:center;justify-content:center;padding:20px}
+.panel{background:#fff;border-radius:20px 20px 0 0;max-height:85vh;display:flex;flex-direction:column;max-width:480px;margin:0 auto;width:100%}
+.panel-header{padding:16px 20px 12px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center}
+.panel-title{font-size:18px;font-weight:700}
+.panel-close{background:none;border:none;font-size:24px;color:#888}
+.panel-body{flex:1;overflow-y:auto;padding:8px 16px}
+
+.cart-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f0f0}
+.cart-item-info{flex:1;min-width:0}
+.cart-item-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cart-item-detail{font-size:12px;color:#888}
+.cart-item-controls{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.qty-btn{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.qty-minus{border:1.5px solid #ddd;background:#fff;color:#333}
+.qty-plus{border:none;background:#1a6b4a;color:#fff}
+.qty-num{font-weight:700;font-size:15px;min-width:20px;text-align:center}
+.cart-item-subtotal{font-weight:700;font-size:14px;min-width:70px;text-align:right;color:#1a6b4a}
+
+.cart-footer{padding:12px 20px 16px;border-top:2px solid #1a6b4a}
+.cart-footer-total{display:flex;justify-content:space-between;margin-bottom:12px}
+.cart-footer-label{font-size:16px;font-weight:600}
+.cart-footer-amount{font-size:22px;font-weight:800;color:#1a6b4a}
+.pay-section{background:#f8f9fa;border-radius:12px;padding:12px;margin-bottom:12px}
+.pay-label{font-size:13px;color:#666;margin-bottom:6px;font-weight:500}
+.pay-input-wrap{position:relative;margin-bottom:8px}
+.pay-input{width:100%;padding:12px 12px 12px 36px;border-radius:10px;border:1.5px solid #ddd;font-size:18px;font-weight:700;color:#1a1a1a;background:#fff}
+.pay-input:focus{border-color:#1a6b4a}
+.pay-rp{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;color:#888;font-weight:600}
+.pay-quick{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.pay-quick-btn{padding:6px 12px;border-radius:8px;border:1px solid #ddd;background:#fff;font-size:12px;font-weight:600;color:#1a6b4a;transition:all .1s}
+.pay-quick-btn:active{background:#e8f5e9}
+.pay-quick-btn.exact{background:#1a6b4a;color:#fff;border-color:#1a6b4a}
+.change-box{border-radius:10px;padding:12px;text-align:center;margin-bottom:4px}
+.change-box.positive{background:#e8f5e9;border:1.5px solid #a5d6a7}
+.change-box.negative{background:#ffeaea;border:1.5px solid #ef9a9a}
+.change-box.zero{background:#fff8e1;border:1.5px solid #ffe082}
+.change-label{font-size:12px;color:#666;margin-bottom:2px}
+.change-amount{font-size:24px;font-weight:800}
+.change-amount.positive{color:#1a6b4a}
+.change-amount.negative{color:#e53935}
+.change-amount.zero{color:#f9a825}
+.cart-footer-btns{display:flex;gap:10px}
+.btn-clear{flex:1;padding:12px;border-radius:10px;border:1.5px solid #ddd;background:#fff;font-size:14px;color:#e53935;font-weight:600}
+.btn-checkout{flex:2;padding:12px;border-radius:10px;border:none;background:#1a6b4a;color:#fff;font-size:15px;font-weight:700}
+.btn-checkout:disabled{background:#999;cursor:default}
+
+.modal-box{background:#fff;border-radius:16px;padding:24px;width:100%;max-width:400px}
+.modal-title{font-size:18px;font-weight:700;margin-bottom:16px}
+.modal-fields{display:flex;flex-direction:column;gap:12px}
+.modal-input{padding:10px;border-radius:8px;border:1.5px solid #ddd;font-size:14px;width:100%}
+.modal-row{display:flex;gap:8px}
+.modal-btns{display:flex;gap:10px;margin-top:4px}
+.btn-cancel{flex:1;padding:12px;border-radius:10px;border:1.5px solid #ddd;background:#fff;font-size:14px}
+.btn-save{flex:1;padding:12px;border-radius:10px;border:none;background:#1a6b4a;color:#fff;font-size:14px;font-weight:700}
+
+.empty{text-align:center;padding:40px;color:#999}
+.empty-icon{font-size:40px;margin-bottom:8px}
+
+.tx-item{padding:12px 0;border-bottom:1px solid #f0f0f0}
+.tx-header{display:flex;justify-content:space-between;margin-bottom:6px}
+.tx-date{font-size:12px;color:#888}
+.tx-total{font-weight:700;color:#1a6b4a}
+.tx-line{font-size:12px;color:#666;padding-left:8px}
+
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#1a6b4a;color:#fff;padding:10px 24px;border-radius:10px;font-size:14px;font-weight:600;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,.2);animation:fadeInOut 1.5s ease}
+@keyframes fadeInOut{0%{opacity:0;transform:translateX(-50%) translateY(-10px)}15%{opacity:1;transform:translateX(-50%) translateY(0)}85%{opacity:1}100%{opacity:0}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script>
+const e=React.createElement,{useState,useEffect,useRef,useCallback}=React;
+
+const PRODUCTS=[
+{id:"m1",name:"Indomie Bawang",cat:"Mie Instan",v:[{l:"Karton",p:115000},{l:"Ecer",p:3000}]},
+{id:"m2",name:"Indomie Ayam Special",cat:"Mie Instan",v:[{l:"Karton",p:116000},{l:"Ecer",p:3000}]},
+{id:"m3",name:"Indomie Goreng Plus Special",cat:"Mie Instan",v:[{l:"Karton",p:120000},{l:"Ecer",p:3500}]},
+{id:"m4",name:"Indomie Goreng Aceh",cat:"Mie Instan",v:[{l:"Karton",p:120000},{l:"Ecer",p:3500}]},
+{id:"m5",name:"Sedap Pop Mie Ayam Jerit",cat:"Mie Instan",v:[{l:"Karton",p:53000},{l:"Ecer",p:6000}]},
+{id:"m6",name:"Sedap Mie Goreng",cat:"Mie Instan",v:[{l:"Karton",p:113000},{l:"Ecer",p:3000}]},
+{id:"m7",name:"Sedap Mie Soto",cat:"Mie Instan",v:[{l:"Karton",p:108000},{l:"Ecer",p:3000}]},
+{id:"m8",name:"Sedap Pop Mie Soto",cat:"Mie Instan",v:[{l:"Karton",p:53000},{l:"Ecer",p:6000}]},
+{id:"m9",name:"Sedap Pop Mie Karo",cat:"Mie Instan",v:[{l:"Karton",p:53000},{l:"Ecer",p:6000}]},
+{id:"m10",name:"Sedap Pop Mie Baso",cat:"Mie Instan",v:[{l:"Karton",p:53000},{l:"Ecer",p:6000}]},
+{id:"m11",name:"Sedap Pop Mie Baso Bleduk",cat:"Mie Instan",v:[{l:"Karton",p:53000},{l:"Ecer",p:6000}]},
+{id:"m12",name:"Sedap Mie Ayam Bawang",cat:"Mie Instan",v:[{l:"Karton",p:108000},{l:"Ecer",p:3000}]},
+{id:"m13",name:"Sedap Pop Mie Korean Spicy",cat:"Mie Instan",v:[{l:"Karton",p:53000},{l:"Ecer",p:6000}]},
+{id:"m14",name:"Indomie Ayam Goreng Geprek",cat:"Mie Instan",v:[{l:"Karton",p:118000},{l:"Ecer",p:3000}]},
+{id:"m15",name:"Sukses Mie Goreng Isi 2",cat:"Mie Instan",v:[{l:"Karton",p:87000},{l:"Ecer",p:4000}]},
+{id:"k1",name:"Energen",cat:"Kopi & Sachet",v:[{l:"Renteng",p:22000},{l:"Ecer",p:2500}]},
+{id:"k2",name:"Luwak White Kopi",cat:"Kopi & Sachet",v:[{l:"Renteng",p:17000},{l:"Ecer",p:2000}]},
+{id:"k3",name:"Chocolatos Drink",cat:"Kopi & Sachet",v:[{l:"Renteng",p:20000},{l:"Ecer",p:2000}]},
+{id:"k4",name:"Tongji Teh Celup",cat:"Kopi & Sachet",v:[{l:"Pcs",p:12000}]},
+{id:"k5",name:"Luwak Kopi Hitam",cat:"Kopi & Sachet",v:[{l:"Renteng",p:10000},{l:"Ecer",p:1000}]},
+{id:"k6",name:"Goodday Chococino",cat:"Kopi & Sachet",v:[{l:"Renteng",p:16000},{l:"Ecer",p:2000}]},
+{id:"k7",name:"Kapal Api 90g",cat:"Kopi & Sachet",v:[{l:"Renteng",p:67000},{l:"Ecer",p:7000}]},
+{id:"k8",name:"Goodday Butterscotch",cat:"Kopi & Sachet",v:[{l:"Renteng",p:16000},{l:"Ecer",p:2000}]},
+{id:"k9",name:"Goodday Mocacino",cat:"Kopi & Sachet",v:[{l:"Renteng",p:16000},{l:"Ecer",p:2000}]},
+{id:"k10",name:"Kopi ABC 3in1",cat:"Kopi & Sachet",v:[{l:"Renteng",p:17500},{l:"Ecer",p:2000}]},
+{id:"k11",name:"Luwak Kopi+Gula",cat:"Kopi & Sachet",v:[{l:"Renteng",p:17500},{l:"Ecer",p:2000}]},
+{id:"k12",name:"Extra Joss",cat:"Kopi & Sachet",v:[{l:"Pack",p:7500},{l:"Ecer",p:1000}]},
+{id:"k13",name:"Susu Frisian Flag Sachet",cat:"Kopi & Sachet",v:[{l:"Renteng",p:10000},{l:"Ecer",p:2000}]},
+{id:"k14",name:"Susu Indomilk Refill 260g",cat:"Kopi & Sachet",v:[{l:"Pcs",p:11000}]},
+{id:"k15",name:"Coffee Mix",cat:"Kopi & Sachet",v:[{l:"Renteng",p:16500},{l:"Ecer",p:2000}]},
+{id:"k16",name:"Kapal Api 23g",cat:"Kopi & Sachet",v:[{l:"Renteng",p:17500},{l:"Ecer",p:2000}]},
+{id:"k17",name:"Top Coffee Aren",cat:"Kopi & Sachet",v:[{l:"Renteng",p:18500},{l:"Ecer",p:2000}]},
+{id:"k18",name:"Goodday Vanilalatte",cat:"Kopi & Sachet",v:[{l:"Renteng",p:16500},{l:"Ecer",p:2000}]},
+{id:"k19",name:"Goodday Carrebian",cat:"Kopi & Sachet",v:[{l:"Renteng",p:16500},{l:"Ecer",p:2000}]},
+{id:"k20",name:"Luwak Premium 100g",cat:"Kopi & Sachet",v:[{l:"Pcs",p:17000}]},
+{id:"k21",name:"Goodday Cappucino",cat:"Kopi & Sachet",v:[{l:"Renteng",p:21000},{l:"Ecer",p:2500}]},
+{id:"k22",name:"Kopi ABC Coklat Mocca",cat:"Kopi & Sachet",v:[{l:"Renteng",p:17000},{l:"Ecer",p:2000}]},
+{id:"k23",name:"Kapal Api 6g",cat:"Kopi & Sachet",v:[{l:"Renteng",p:10000},{l:"Ecer",p:1000}]},
+{id:"k24",name:"Kopi ABC Klepon",cat:"Kopi & Sachet",v:[{l:"Renteng",p:22000},{l:"Ecer",p:2500}]},
+{id:"k25",name:"Kapal Api 350g",cat:"Kopi & Sachet",v:[{l:"Pcs",p:33000}]},
+{id:"k26",name:"Kapal Api 60g",cat:"Kopi & Sachet",v:[{l:"Pcs",p:10000}]},
+{id:"k27",name:"Nutrisari",cat:"Kopi & Sachet",v:[{l:"Renteng",p:14000},{l:"Ecer",p:1500}]},
+{id:"b1",name:"Rosebrand Tepung Ketan 500g",cat:"Bumbu & Minyak",v:[{l:"Pcs",p:13000}]},
+{id:"b2",name:"Rosebrand Tepung Beras 500g",cat:"Bumbu & Minyak",v:[{l:"Pcs",p:9000}]},
+{id:"b3",name:"Minyak Hemart 1L",cat:"Bumbu & Minyak",v:[{l:"Pcs",p:22000}]},
+{id:"b4",name:"Minyak Kita 2L",cat:"Bumbu & Minyak",v:[{l:"Pcs",p:40000}]},
+{id:"b5",name:"Sunco 2L",cat:"Bumbu & Minyak",v:[{l:"Pcs",p:47000}]},
+{id:"b6",name:"Bimoli 2L",cat:"Bumbu & Minyak",v:[{l:"Pcs",p:44000}]},
+{id:"b7",name:"Minyak Fitri 400ml",cat:"Bumbu & Minyak",v:[{l:"Pcs",p:12000}]},
+{id:"b8",name:"Minyak Kusuma 800ml",cat:"Bumbu & Minyak",v:[{l:"Pcs",p:19000}]},
+{id:"b9",name:"Minyak Rizki",cat:"Bumbu & Minyak",v:[{l:"Pcs",p:20000}]},
+{id:"b10",name:"Indofood Bumbu Racik",cat:"Bumbu & Minyak",v:[{l:"Pcs",p:18000}]},
+{id:"b11",name:"Sasa Tepung Bumbu 35g",cat:"Bumbu & Minyak",v:[{l:"Renteng",p:11000},{l:"Ecer",p:2000}]},
+{id:"b12",name:"Ajinomoto Tepung Bumbu",cat:"Bumbu & Minyak",v:[{l:"Renteng",p:28000},{l:"Ecer",p:3000}]},
+{id:"b13",name:"Gula Pasir Kuning 1kg",cat:"Bumbu & Minyak",v:[{l:"Pcs",p:19000}]},
+{id:"b14",name:"Gula Pasir Hijau 1kg",cat:"Bumbu & Minyak",v:[{l:"Pcs",p:19000}]},
+{id:"b15",name:"Sasa Moto",cat:"Bumbu & Minyak",v:[{l:"Pcs",p:6000}]},
+{id:"b16",name:"Sun Kara Santan",cat:"Bumbu & Minyak",v:[{l:"Pcs",p:6000}]},
+{id:"pg1",name:"Pepsodent",cat:"Perawatan",v:[{l:"Pcs",p:5500}]},
+{id:"pg2",name:"Pepsodent + Sikat Gigi",cat:"Perawatan",v:[{l:"Pcs",p:6600}]},
+{id:"pg3",name:"Pepsodent 190g",cat:"Perawatan",v:[{l:"Pcs",p:14500}]},
+{id:"pg4",name:"Pepsodent Ijo",cat:"Perawatan",v:[{l:"Pcs",p:6000}]},
+{id:"pg5",name:"Closeup",cat:"Perawatan",v:[{l:"Pcs",p:7500}]},
+{id:"s1",name:"Lifebuoy Shampo Kuning",cat:"Perawatan",v:[{l:"Renteng",p:6000},{l:"Ecer",p:500}]},
+{id:"s2",name:"Sunsilk Shampo",cat:"Perawatan",v:[{l:"Renteng",p:10000},{l:"Ecer",p:1000}]},
+{id:"s3",name:"Lifebuoy Shampo Mentol",cat:"Perawatan",v:[{l:"Renteng",p:5500},{l:"Ecer",p:500}]},
+{id:"s4",name:"Dove Shampo",cat:"Perawatan",v:[{l:"Renteng",p:10000},{l:"Ecer",p:1000}]},
+{id:"s5",name:"Zinc Shampo",cat:"Perawatan",v:[{l:"Renteng",p:5500},{l:"Ecer",p:500}]},
+{id:"s6",name:"Head & Shoulders",cat:"Perawatan",v:[{l:"Renteng",p:10000},{l:"Ecer",p:1000}]},
+{id:"s7",name:"Pantene Shampo",cat:"Perawatan",v:[{l:"Renteng",p:10000},{l:"Ecer",p:1000}]},
+{id:"s8",name:"Sunsilk Hijab",cat:"Perawatan",v:[{l:"Renteng",p:11000},{l:"Ecer",p:1000}]},
+{id:"s9",name:"Clear Shampo",cat:"Perawatan",v:[{l:"Renteng",p:11000},{l:"Ecer",p:1000}]},
+{id:"sb1",name:"Lifebuoy Body Wash Kuning",cat:"Perawatan",v:[{l:"Pcs",p:5500}]},
+{id:"sb2",name:"Lifebuoy Body Wash Merah",cat:"Perawatan",v:[{l:"Pcs",p:5500}]},
+{id:"sb3",name:"Lux Sabun Batang",cat:"Perawatan",v:[{l:"Pcs",p:5000}]},
+{id:"sb4",name:"Shinzui Sabun Batang",cat:"Perawatan",v:[{l:"Pcs",p:6000}]},
+{id:"sb5",name:"Giv Sabun Batang",cat:"Perawatan",v:[{l:"Pcs",p:3500}]},
+{id:"sb6",name:"Nuvo Sabun Batang",cat:"Perawatan",v:[{l:"Pcs",p:3500}]},
+{id:"sb7",name:"Soffel",cat:"Perawatan",v:[{l:"Renteng (24)",p:12000},{l:"Ecer",p:500}]},
+{id:"sb8",name:"Kapas",cat:"Perawatan",v:[{l:"Pcs",p:5500}]},
+{id:"o1",name:"Tolak Angin",cat:"Obat",v:[{l:"Box",p:46000},{l:"Ecer",p:5000}]},
+{id:"o2",name:"Antangin",cat:"Obat",v:[{l:"Box",p:43000},{l:"Ecer",p:5000}]},
+{id:"o3",name:"Obat Nyamuk Kingkong",cat:"Obat",v:[{l:"Pcs",p:6000}]},
+{id:"c1",name:"Wipol",cat:"Kebersihan",v:[{l:"Renteng",p:6000},{l:"Ecer",p:1500}]},
+{id:"c2",name:"Ekonomi Sabun Colek",cat:"Kebersihan",v:[{l:"Pcs",p:2500}]},
+{id:"c3",name:"Soklin 20ml",cat:"Kebersihan",v:[{l:"Renteng (12)",p:11000},{l:"Ecer",p:500}]},
+{id:"c4",name:"Molto",cat:"Kebersihan",v:[{l:"Renteng",p:6000},{l:"Ecer",p:500}]},
+{id:"c5",name:"Charm Pembalut",cat:"Kebersihan",v:[{l:"Renteng",p:26000},{l:"Ecer",p:3000}]},
+{id:"c6",name:"Charm Pembalut 29cm",cat:"Kebersihan",v:[{l:"Pcs",p:11000}]},
+{id:"c7",name:"Rinso+Molto Deterjen",cat:"Kebersihan",v:[{l:"Renteng",p:6000},{l:"Ecer",p:1000}]},
+{id:"c8",name:"Soklin Rinso 225g",cat:"Kebersihan",v:[{l:"Pcs",p:5000}]},
+{id:"c9",name:"Charm Pembalut Oren",cat:"Kebersihan",v:[{l:"Pcs",p:11000}]},
+{id:"c10",name:"Daia 47g",cat:"Kebersihan",v:[{l:"Renteng",p:5500},{l:"Ecer",p:1500}]},
+{id:"c11",name:"Rapika",cat:"Kebersihan",v:[{l:"Pcs",p:4500}]},
+{id:"c12",name:"Mama Lemon 450g",cat:"Kebersihan",v:[{l:"Pcs",p:8500}]},
+{id:"c13",name:"Mama Lemon 680ml",cat:"Kebersihan",v:[{l:"Pcs",p:10000}]},
+{id:"c14",name:"Mama Lemon 105ml",cat:"Kebersihan",v:[{l:"Pcs",p:2000}]},
+{id:"c15",name:"Mama Lemon 210ml",cat:"Kebersihan",v:[{l:"Pcs",p:5000}]},
+{id:"c16",name:"Sunlight 420ml",cat:"Kebersihan",v:[{l:"Pcs",p:10000}]},
+{id:"c17",name:"Sunlight 370ml",cat:"Kebersihan",v:[{l:"Pcs",p:8000}]},
+{id:"c18",name:"Sunlight 635ml",cat:"Kebersihan",v:[{l:"Pcs",p:10000}]},
+{id:"c19",name:"Sunlight 92ml",cat:"Kebersihan",v:[{l:"Pcs",p:2000}]},
+{id:"c20",name:"Larist Tissue",cat:"Kebersihan",v:[{l:"Pack (5)",p:11000},{l:"Ecer",p:2500}]},
+{id:"sn1",name:"Chitato",cat:"Snack",v:[{l:"Renteng",p:20000},{l:"Ecer",p:2000}]},
+{id:"sn2",name:"Malkist Roma",cat:"Snack",v:[{l:"Renteng",p:10000},{l:"Ecer",p:1000}]},
+{id:"sn3",name:"Gery Chocolatos",cat:"Snack",v:[{l:"Box",p:11000},{l:"Ecer",p:500}]},
+{id:"sn4",name:"Oreo",cat:"Snack",v:[{l:"Box",p:23000},{l:"Ecer",p:2000}]},
+{id:"sn5",name:"Piatos",cat:"Snack",v:[{l:"Renteng",p:18000},{l:"Ecer",p:2000}]},
+{id:"sn6",name:"Happy TOS",cat:"Snack",v:[{l:"Renteng",p:17000},{l:"Ecer",p:2000}]},
+{id:"sn7",name:"Taro Snack",cat:"Snack",v:[{l:"Pcs",p:1500}]},
+{id:"sn8",name:"French Fries Snack",cat:"Snack",v:[{l:"Pcs",p:4500}]},
+{id:"sn9",name:"Twisko",cat:"Snack",v:[{l:"Pcs",p:4500}]},
+{id:"sn10",name:"Better",cat:"Snack",v:[{l:"Pcs",p:2500}]},
+{id:"sn11",name:"Nyam Nyam",cat:"Snack",v:[{l:"Pcs",p:2500}]},
+{id:"e1",name:"Aice Nanas/Semangka/Jeruk",cat:"Es Krim",v:[{l:"Pcs",p:2000}]},
+{id:"e2",name:"Aice Choco Malt/Fruizy Grape",cat:"Es Krim",v:[{l:"Pcs",p:2000}]},
+{id:"e3",name:"Aice Miki Vanilla/Double Choco",cat:"Es Krim",v:[{l:"Pcs",p:2000}]},
+{id:"e4",name:"Aice Miki Miki Cereal",cat:"Es Krim",v:[{l:"Pcs",p:2000}]},
+{id:"e5",name:"Aice Lemon Sweet Tea",cat:"Es Krim",v:[{l:"Pcs",p:2000}]},
+{id:"e6",name:"Aice Bingo",cat:"Es Krim",v:[{l:"Pcs",p:2500}]},
+{id:"e7",name:"Aice Fruizy Yoghurt",cat:"Es Krim",v:[{l:"Pcs",p:3000}]},
+{id:"e8",name:"Aice 2 Color",cat:"Es Krim",v:[{l:"Pcs",p:3000}]},
+{id:"e9",name:"Aice Fruitty Rolls/Taro Crispy",cat:"Es Krim",v:[{l:"Pcs",p:4000}]},
+{id:"e10",name:"Aice Mochi Vanilla/Coklat",cat:"Es Krim",v:[{l:"Pcs",p:3000}]},
+{id:"e11",name:"Aice Mochi Peach/Banana",cat:"Es Krim",v:[{l:"Pcs",p:3000}]},
+{id:"e12",name:"Aice Mochi Klepon/Mango",cat:"Es Krim",v:[{l:"Pcs",p:3000}]},
+{id:"e13",name:"Aice Sweet Corn",cat:"Es Krim",v:[{l:"Pcs",p:3000}]},
+{id:"e14",name:"Aice Melon",cat:"Es Krim",v:[{l:"Pcs",p:3000}]},
+{id:"e15",name:"Aice Goyang Lidah Mango",cat:"Es Krim",v:[{l:"Pcs",p:3000}]},
+{id:"e16",name:"Aice Vanilla Berry Cone",cat:"Es Krim",v:[{l:"Pcs",p:3000}]},
+{id:"e17",name:"Aice Strawberry/Coffee Crispy",cat:"Es Krim",v:[{l:"Pcs",p:4000}]},
+{id:"e18",name:"Aice Mangga Cup",cat:"Es Krim",v:[{l:"Pcs",p:4000}]},
+{id:"e19",name:"Aice Moong Bean",cat:"Es Krim",v:[{l:"Pcs",p:4000}]},
+{id:"e20",name:"Aice Crispy Balls Cookies&Cream",cat:"Es Krim",v:[{l:"Pcs",p:5000}]},
+{id:"e21",name:"Aice Crispy Balls",cat:"Es Krim",v:[{l:"Pcs",p:5000}]},
+{id:"e22",name:"Aice Coklat Crispy",cat:"Es Krim",v:[{l:"Pcs",p:5000}]},
+{id:"e23",name:"Aice Cup Coklat/Strawberry",cat:"Es Krim",v:[{l:"Pcs",p:5000}]},
+{id:"e24",name:"Aice Chocomelt/Straw Cone",cat:"Es Krim",v:[{l:"Pcs",p:5000}]},
+{id:"e25",name:"Aice Choco Max/Berry Max Cone",cat:"Es Krim",v:[{l:"Pcs",p:7000}]},
+{id:"e26",name:"Aice Histeria Vanilla/Peach",cat:"Es Krim",v:[{l:"Pcs",p:8500}]},
+{id:"d1",name:"Air Putih Botol Mini",cat:"Minuman",v:[{l:"Pcs",p:2000}]},
+{id:"d2",name:"Air Putih 550ml",cat:"Minuman",v:[{l:"Pcs",p:2500}]},
+{id:"d3",name:"Air Putih Tanggung",cat:"Minuman",v:[{l:"Pcs",p:3000}]},
+{id:"d4",name:"Air Putih Besar",cat:"Minuman",v:[{l:"Pcs",p:6000}]},
+{id:"d5",name:"Teh Pucuk Kecil",cat:"Minuman",v:[{l:"Pcs",p:3000}]},
+{id:"d6",name:"Teh Pucuk Besar",cat:"Minuman",v:[{l:"Pcs",p:4000}]},
+{id:"d7",name:"Floridina",cat:"Minuman",v:[{l:"Pcs",p:3500}]},
+{id:"d8",name:"Isoplus",cat:"Minuman",v:[{l:"Pcs",p:3500}]},
+{id:"d9",name:"Mizone",cat:"Minuman",v:[{l:"Pcs",p:6000}]},
+{id:"d10",name:"Larutan Cap Badak",cat:"Minuman",v:[{l:"Pcs",p:8500}]},
+{id:"d11",name:"Nipis Madu",cat:"Minuman",v:[{l:"Pcs",p:4500}]},
+{id:"d12",name:"Pocari 500ml",cat:"Minuman",v:[{l:"Pcs",p:8000}]},
+{id:"d13",name:"Pocari 350ml",cat:"Minuman",v:[{l:"Pcs",p:7000}]},
+{id:"d14",name:"Golda",cat:"Minuman",v:[{l:"Pcs",p:4000}]},
+{id:"d15",name:"Coca Cola Tanggung",cat:"Minuman",v:[{l:"Pcs",p:5000}]},
+{id:"d16",name:"Sprite Tanggung",cat:"Minuman",v:[{l:"Pcs",p:5000}]},
+{id:"d17",name:"Fanta Tanggung",cat:"Minuman",v:[{l:"Pcs",p:5000}]},
+{id:"d18",name:"Pulpy Orange",cat:"Minuman",v:[{l:"Pcs",p:6000}]},
+{id:"d19",name:"Milku",cat:"Minuman",v:[{l:"Pcs",p:4000}]},
+{id:"d20",name:"Cimory Botol",cat:"Minuman",v:[{l:"Pcs",p:8500}]},
+{id:"d21",name:"Teh Kotak",cat:"Minuman",v:[{l:"Pcs",p:5000}]},
+{id:"d22",name:"Cimory Susu UHT",cat:"Minuman",v:[{l:"Pcs",p:7500}]},
+{id:"d23",name:"Kopi ABC Susu Botol",cat:"Minuman",v:[{l:"Pcs",p:4500}]},
+{id:"d24",name:"Sari Kacang Ijo Kotak",cat:"Minuman",v:[{l:"Pcs",p:6000}]},
+{id:"d25",name:"Kratingdaeng",cat:"Minuman",v:[{l:"Pcs",p:6000}]},
+{id:"d26",name:"Nutribost Stro & Jeruk",cat:"Minuman",v:[{l:"Pcs",p:7000}]},
+{id:"d27",name:"Teh Botol Sosro",cat:"Minuman",v:[{l:"Pcs",p:4500}]},
+{id:"a1",name:"Aqua Gelas",cat:"Air Mineral",v:[{l:"Karton",p:34000}]},
+{id:"a2",name:"Aqua 330ml",cat:"Air Mineral",v:[{l:"Karton",p:37000}]},
+{id:"a3",name:"Aqua 600ml",cat:"Air Mineral",v:[{l:"Karton",p:46000}]},
+{id:"a4",name:"Aqua 1,5L",cat:"Air Mineral",v:[{l:"Karton",p:53000}]},
+{id:"a5",name:"Aqua Galon 19L",cat:"Air Mineral",v:[{l:"Galon",p:20000}]},
+{id:"a6",name:"Le Mineral Galon",cat:"Air Mineral",v:[{l:"Galon",p:25000}]},
+{id:"a7",name:"Le Mineral 330ml",cat:"Air Mineral",v:[{l:"Karton",p:38000}]},
+{id:"a8",name:"Le Mineral 600ml",cat:"Air Mineral",v:[{l:"Karton",p:48000}]},
+{id:"a9",name:"Le Mineral 1,5L",cat:"Air Mineral",v:[{l:"Karton",p:58000}]},
+{id:"a10",name:"Nestle 330ml",cat:"Air Mineral",v:[{l:"Karton",p:38000}]},
+{id:"a11",name:"Nestle 600ml",cat:"Air Mineral",v:[{l:"Karton",p:48000}]},
+{id:"a12",name:"Nestle Galon 15L",cat:"Air Mineral",v:[{l:"Galon",p:25000}]},
+{id:"a13",name:"VIT Gelas",cat:"Air Mineral",v:[{l:"Karton",p:24000}]},
+{id:"a14",name:"VIT Botol Mini",cat:"Air Mineral",v:[{l:"Karton",p:21000}]},
+{id:"a15",name:"VIT 550ml",cat:"Air Mineral",v:[{l:"Karton",p:33000}]},
+{id:"a16",name:"VIT 1,5L",cat:"Air Mineral",v:[{l:"Karton",p:35000}]},
+{id:"a17",name:"Cleo Galon Sekali Pakai",cat:"Air Mineral",v:[{l:"Galon",p:21000}]},
+{id:"a18",name:"Cleo Galon 19L",cat:"Air Mineral",v:[{l:"Galon",p:21000}]},
+{id:"a19",name:"Cleo Botol Mini",cat:"Air Mineral",v:[{l:"Karton",p:22000}]},
+{id:"a20",name:"Cleo 500ml",cat:"Air Mineral",v:[{l:"Karton",p:42000}]},
+{id:"a21",name:"Cleo Gelas",cat:"Air Mineral",v:[{l:"Karton",p:29000}]},
+{id:"a22",name:"Aquviva 350ml",cat:"Air Mineral",v:[{l:"Karton",p:21000}]},
+{id:"a23",name:"Aquviva 700ml",cat:"Air Mineral",v:[{l:"Karton",p:22000}]},
+{id:"a24",name:"Aquviva 1,6L",cat:"Air Mineral",v:[{l:"Karton",p:26000}]},
+{id:"a25",name:"Oasis Gelas",cat:"Air Mineral",v:[{l:"Karton",p:33000}]},
+{id:"a26",name:"Oasis 330ml",cat:"Air Mineral",v:[{l:"Karton",p:45000}]},
+{id:"a27",name:"Oasis 600ml",cat:"Air Mineral",v:[{l:"Karton",p:48000}]},
+{id:"a28",name:"Oasis 1,5L",cat:"Air Mineral",v:[{l:"Karton",p:53000}]},
+{id:"g1",name:"Sprite/Fanta/Coca Cola Mini",cat:"Grosir Minuman",v:[{l:"Karton",p:33000}]},
+{id:"g2",name:"Sprite/Fanta/Coca Cola Tanggung",cat:"Grosir Minuman",v:[{l:"Karton",p:47000}]},
+{id:"g3",name:"Sprite/Fanta/Coca Cola 1L",cat:"Grosir Minuman",v:[{l:"Karton",p:97000}]},
+{id:"g4",name:"Mizone 500ml",cat:"Grosir Minuman",v:[{l:"Karton",p:52000}]},
+{id:"g5",name:"Pulpy Orange",cat:"Grosir Minuman",v:[{l:"Karton",p:57000}]},
+{id:"g6",name:"Golda",cat:"Grosir Minuman",v:[{l:"Karton",p:37000}]},
+{id:"g7",name:"Milku",cat:"Grosir Minuman",v:[{l:"Karton",p:36000}]},
+{id:"g8",name:"Floridina",cat:"Grosir Minuman",v:[{l:"Karton",p:32000}]},
+{id:"g9",name:"Isoplus",cat:"Grosir Minuman",v:[{l:"Karton",p:30000}]},
+{id:"g10",name:"Teh Pucuk 350ml",cat:"Grosir Minuman",v:[{l:"Karton",p:63000}]},
+{id:"g11",name:"Teh Pucuk Mini",cat:"Grosir Minuman",v:[{l:"Karton",p:60000}]},
+{id:"g12",name:"Larutan Cap Badak Kaleng",cat:"Grosir Minuman",v:[{l:"Karton",p:139000}]},
+{id:"g13",name:"Pocari 350ml",cat:"Grosir Minuman",v:[{l:"Karton",p:134000}]},
+{id:"g14",name:"Pocari 500ml",cat:"Grosir Minuman",v:[{l:"Karton",p:155000}]},
+{id:"g15",name:"Okky Jelly Drink",cat:"Grosir Minuman",v:[{l:"Karton",p:21000}]},
+{id:"g16",name:"Siplah",cat:"Grosir Minuman",v:[{l:"Karton",p:27000}]},
+{id:"g17",name:"Teh Gelas",cat:"Grosir Minuman",v:[{l:"Karton",p:21000}]},
+{id:"g18",name:"Power F",cat:"Grosir Minuman",v:[{l:"Karton",p:21000}]},
+{id:"g19",name:"Nipis Madu",cat:"Grosir Minuman",v:[{l:"Karton",p:41000}]},
+{id:"g20",name:"UJT Susu UHT 125ml",cat:"Grosir Minuman",v:[{l:"Karton",p:123000}]},
+{id:"g21",name:"UJT Susu UHT 200ml",cat:"Grosir Minuman",v:[{l:"Karton",p:117000}]},
+{id:"g22",name:"UJT Sari Kacang Ijo",cat:"Grosir Minuman",v:[{l:"Karton",p:103000}]},
+{id:"g23",name:"C1000",cat:"Grosir Minuman",v:[{l:"Karton",p:168000}]},
+{id:"g24",name:"Kopi ABC Botol",cat:"Grosir Minuman",v:[{l:"Karton",p:42000}]},
+{id:"g25",name:"Bear Brand",cat:"Grosir Minuman",v:[{l:"Karton",p:288000}]},
+];
+
+const CATS=["Semua","Mie Instan","Kopi & Sachet","Bumbu & Minyak","Perawatan","Obat","Kebersihan","Snack","Es Krim","Minuman","Air Mineral","Grosir Minuman"];
+const fmt=n=>"Rp "+n.toLocaleString("id-ID");
+const LS={
+  get(k){try{return JSON.parse(localStorage.getItem(k))}catch{return null}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}},
+  del(k){try{localStorage.removeItem(k)}catch{}}
+};
+
+function App(){
+  const[products,setProducts]=useState(()=>{const c=LS.get("kasir-custom");return c?[...PRODUCTS,...c]:PRODUCTS});
+  const[search,setSearch]=useState("");
+  const[cat,setCat]=useState("Semua");
+  const[cart,setCart]=useState(()=>LS.get("kasir-cart")||[]);
+  const[showCart,setShowCart]=useState(false);
+  const[showAdd,setShowAdd]=useState(false);
+  const[showHist,setShowHist]=useState(false);
+  const[history,setHistory]=useState(()=>LS.get("kasir-hist")||[]);
+  const[np,setNp]=useState({name:"",cat:"Mie Instan",price:"",label:"Pcs"});
+  const[toast,setToast]=useState("");
+  const[bayar,setBayar]=useState("");
+  const sRef=useRef(null);
+
+  useEffect(()=>{cart.length?LS.set("kasir-cart",cart):LS.del("kasir-cart")},[cart]);
+
+  const filtered=products.filter(p=>{
+    const mc=cat==="Semua"||p.cat===cat;
+    const ms=!search||p.name.toLowerCase().includes(search.toLowerCase());
+    return mc&&ms;
+  });
+
+  const addToCart=useCallback((prod,vr)=>{
+    const key=prod.id+"-"+vr.l;
+    setCart(prev=>{
+      const ex=prev.find(c=>c.key===key);
+      if(ex)return prev.map(c=>c.key===key?{...c,qty:c.qty+1}:c);
+      return[...prev,{key,name:prod.name,label:vr.l,price:vr.p,qty:1}];
+    });
+    showToast(prod.name+" ditambahkan");
+  },[]);
+
+  const updateQty=useCallback((key,d)=>{
+    setCart(prev=>prev.map(c=>c.key===key?{...c,qty:Math.max(0,c.qty+d)}:c).filter(c=>c.qty>0));
+  },[]);
+
+  const total=cart.reduce((s,c)=>s+c.price*c.qty,0);
+  const totalItems=cart.reduce((s,c)=>s+c.qty,0);
+
+  const showToast=msg=>{setToast(msg);setTimeout(()=>setToast(""),1500)};
+
+  const checkout=()=>{
+    if(!cart.length)return;
+    const tx={id:Date.now(),date:new Date().toLocaleString("id-ID"),items:[...cart],total};
+    const nh=[tx,...history].slice(0,100);
+    setHistory(nh);LS.set("kasir-hist",nh);
+    setCart([]);setShowCart(false);setBayar("");
+    showToast("Transaksi tersimpan!");
+  };
+
+  const addProd=()=>{
+    if(!np.name||!np.price)return;
+    const p={id:"c-"+Date.now(),name:np.name,cat:np.cat,v:[{l:np.label,p:parseInt(np.price)}]};
+    const up=[...products,p];setProducts(up);
+    LS.set("kasir-custom",up.filter(x=>x.id.startsWith("c-")));
+    setNp({name:"",cat:"Mie Instan",price:"",label:"Pcs"});setShowAdd(false);
+    showToast("Produk ditambahkan!");
+  };
+
+  return e("div",{style:{maxWidth:480,margin:"0 auto",minHeight:"100vh",display:"flex",flexDirection:"column",position:"relative"}},
+    // Toast
+    toast&&e("div",{className:"toast"},toast),
+
+    // Header
+    e("div",{className:"header"},
+      e("div",{className:"header-top"},
+        e("div",null,
+          e("div",{className:"header-title"},"Kasir Toko"),
+          e("div",{className:"header-sub"},products.length+" produk")
+        ),
+        e("div",{className:"header-btns"},
+          e("button",{className:"btn-hist",onClick:()=>setShowHist(true)},"Riwayat"),
+          e("button",{className:"btn-add",onClick:()=>setShowAdd(true)},"+ Produk")
+        )
+      ),
+      e("div",{className:"search-wrap"},
+        e("input",{ref:sRef,className:"search-input",type:"text",placeholder:"Cari produk...",value:search,onChange:ev=>setSearch(ev.target.value)}),
+        e("span",{className:"search-icon"},"\u{1F50D}"),
+        search&&e("button",{className:"search-clear",onClick:()=>{setSearch("");sRef.current?.focus()}},"\u2715")
+      )
+    ),
+
+    // Categories
+    e("div",{className:"cats hide-scroll"},
+      CATS.map(c=>e("button",{key:c,className:"cat-btn "+(cat===c?"active":"inactive"),onClick:()=>setCat(c)},c))
+    ),
+
+    // Products
+    e("div",{className:"products hide-scroll",style:{paddingBottom:cart.length?80:16}},
+      filtered.length===0&&e("div",{className:"empty"},e("div",{className:"empty-icon"},"\u{1F4E6}"),"Tidak ada produk ditemukan"),
+      filtered.map(p=>e("div",{key:p.id,className:"product-card"},
+        e("div",{className:"product-name"},p.name),
+        e("div",{className:"variants"},
+          p.v.map(vr=>e("button",{key:vr.l,className:"var-btn",onClick:()=>addToCart(p,vr)},
+            e("span",{className:"var-label"},vr.l),
+            e("span",{className:"var-price"},fmt(vr.p)),
+            e("span",{className:"var-plus"},"+")
+          ))
+        )
+      ))
+    ),
+
+    // Cart bar
+    cart.length>0&&!showCart&&e("div",{className:"cart-bar",onClick:()=>setShowCart(true)},
+      e("div",null,
+        e("span",{className:"cart-badge"},totalItems),
+        e("span",{style:{fontSize:14}},"Lihat Keranjang")
+      ),
+      e("div",{className:"cart-total"},fmt(total))
+    ),
+
+    // Cart panel
+    showCart&&e("div",{className:"overlay",onClick:ev=>{if(ev.target===ev.currentTarget)setShowCart(false)}},
+      e("div",{className:"panel"},
+        e("div",{className:"panel-header"},
+          e("div",{className:"panel-title"},"Keranjang ("+totalItems+")"),
+          e("button",{className:"panel-close",onClick:()=>setShowCart(false)},"\u2715")
+        ),
+        e("div",{className:"panel-body hide-scroll"},
+          cart.map(c=>e("div",{key:c.key,className:"cart-item"},
+            e("div",{className:"cart-item-info"},
+              e("div",{className:"cart-item-name"},c.name),
+              e("div",{className:"cart-item-detail"},c.label+" \u00B7 "+fmt(c.price))
+            ),
+            e("div",{className:"cart-item-controls"},
+              e("button",{className:"qty-btn qty-minus",onClick:()=>updateQty(c.key,-1)},"\u2212"),
+              e("span",{className:"qty-num"},c.qty),
+              e("button",{className:"qty-btn qty-plus",onClick:()=>updateQty(c.key,1)},"+"),
+              e("span",{className:"cart-item-subtotal"},fmt(c.price*c.qty))
+            )
+          ))
+        ),
+        e("div",{className:"cart-footer"},
+          e("div",{className:"cart-footer-total"},
+            e("span",{className:"cart-footer-label"},"Total Belanja"),
+            e("span",{className:"cart-footer-amount"},fmt(total))
+          ),
+          e("div",{className:"pay-section"},
+            e("div",{className:"pay-label"},"Uang Pembeli"),
+            e("div",{className:"pay-input-wrap"},
+              e("span",{className:"pay-rp"},"Rp"),
+              e("input",{className:"pay-input",type:"number",placeholder:"0",value:bayar,onChange:ev=>setBayar(ev.target.value),inputMode:"numeric"})
+            ),
+            e("div",{className:"pay-quick"},
+              e("button",{className:"pay-quick-btn exact",onClick:()=>setBayar(String(total))},"Uang Pas"),
+              [5000,10000,20000,50000,100000].filter(n=>n>=total||n>=5000).slice(0,4).map(n=>
+                e("button",{key:n,className:"pay-quick-btn",onClick:()=>setBayar(String(n))},fmt(n))
+              ),
+              total>100000&&e("button",{className:"pay-quick-btn",onClick:()=>setBayar(String(Math.ceil(total/50000)*50000))},fmt(Math.ceil(total/50000)*50000))
+            ),
+            bayar&&e("div",{className:"change-box "+(parseInt(bayar)>=total?(parseInt(bayar)===total?"zero":"positive"):"negative")},
+              e("div",{className:"change-label"},parseInt(bayar)>=total?"Kembalian":"Kurang"),
+              e("div",{className:"change-amount "+(parseInt(bayar)>=total?(parseInt(bayar)===total?"zero":"positive"):"negative")},
+                fmt(Math.abs(parseInt(bayar)-total))
+              )
+            )
+          ),
+          e("div",{className:"cart-footer-btns"},
+            e("button",{className:"btn-clear",onClick:()=>{setCart([]);setShowCart(false);setBayar("")}},"Hapus Semua"),
+            e("button",{className:"btn-checkout",onClick:checkout},"Selesai & Simpan")
+          )
+        )
+      )
+    ),
+
+    // Add product modal
+    showAdd&&e("div",{className:"overlay overlay-center",onClick:ev=>{if(ev.target===ev.currentTarget)setShowAdd(false)}},
+      e("div",{className:"modal-box"},
+        e("div",{className:"modal-title"},"Tambah Produk Baru"),
+        e("div",{className:"modal-fields"},
+          e("input",{className:"modal-input",placeholder:"Nama produk",value:np.name,onChange:ev=>setNp({...np,name:ev.target.value})}),
+          e("select",{className:"modal-input",value:np.cat,onChange:ev=>setNp({...np,cat:ev.target.value})},
+            CATS.filter(c=>c!=="Semua").map(c=>e("option",{key:c,value:c},c))
+          ),
+          e("div",{className:"modal-row"},
+            e("input",{className:"modal-input",style:{flex:2},placeholder:"Harga",type:"number",value:np.price,onChange:ev=>setNp({...np,price:ev.target.value})}),
+            e("select",{className:"modal-input",style:{flex:1},value:np.label,onChange:ev=>setNp({...np,label:ev.target.value})},
+              ["Pcs","Ecer","Karton","Renteng","Box","Galon"].map(l=>e("option",{key:l,value:l},l))
+            )
+          ),
+          e("div",{className:"modal-btns"},
+            e("button",{className:"btn-cancel",onClick:()=>setShowAdd(false)},"Batal"),
+            e("button",{className:"btn-save",onClick:addProd},"Simpan")
+          )
+        )
+      )
+    ),
+
+    // History modal
+    showHist&&e("div",{className:"overlay",onClick:ev=>{if(ev.target===ev.currentTarget)setShowHist(false)}},
+      e("div",{className:"panel"},
+        e("div",{className:"panel-header"},
+          e("div",{className:"panel-title"},"Riwayat Transaksi"),
+          e("button",{className:"panel-close",onClick:()=>setShowHist(false)},"\u2715")
+        ),
+        e("div",{className:"panel-body hide-scroll"},
+          history.length===0&&e("div",{className:"empty"},"Belum ada transaksi"),
+          history.map(tx=>e("div",{key:tx.id,className:"tx-item"},
+            e("div",{className:"tx-header"},
+              e("span",{className:"tx-date"},tx.date),
+              e("span",{className:"tx-total"},fmt(tx.total))
+            ),
+            tx.items.map((it,i)=>e("div",{key:i,className:"tx-line"},
+              it.qty+"x "+it.name+" ("+it.label+") \u2014 "+fmt(it.price*it.qty)
+            ))
+          ))
+        )
+      )
+    )
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("app")).render(e(App));
+</script>
+</body>
+</html>
